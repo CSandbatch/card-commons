@@ -89,11 +89,17 @@ Every visual layer — background, texture, emblem, foreground — can be
 **uploaded** or **AI-generated**, edited, or varied. Generated and uploaded
 images enter the same reusable asset library and carry provenance.
 
-![Card Studio — a finished calling card with four bound layers, asset library, and provenance inspector](docs/assets/studio-editor.png)
+![Card Studio — a finished calling card with four bound layers, the asset library, an image-model selector, and the provenance inspector](docs/assets/studio-editor.png)
 
-Image generation runs through a protected, OpenAI-backed endpoint. Each
-candidate is reviewed and explicitly accepted or rejected before it becomes a
-provenance-bearing asset; rejected candidates leave no trace.
+Image generation runs through a protected endpoint backed by
+**OpenRouter's unified image API**, with the direct OpenAI API kept as one
+option. Six models are selectable (OpenAI GPT-Image, Gemini Flash Image,
+Seedream 4.5, FLUX.2 Pro, Grok Imagine, and direct GPT-Image) via a global
+default that persists locally plus a per-generation override. The emblem layer
+needs transparency, so it is gated to transparency-capable models with a
+one-click switch. Each candidate is reviewed and explicitly accepted or
+rejected before it becomes a provenance-bearing asset (recording exact provider
+and model); rejected candidates leave no trace.
 
 ![Card Studio — candidate review dialog before an AI layer is accepted](docs/assets/studio-generate.png)
 
@@ -147,9 +153,9 @@ user research, and protocol discussion.
 | --- | --- |
 | Specs, schemas, OpenAPI, whitepaper | Published and committed |
 | Pitch-deck site | Built; deploys to GitHub Pages |
-| Card Studio | Built and committed; typecheck clean, 15/15 unit tests pass |
-| Studio image generation | Verified against **mocked** images only |
-| Live OpenAI run + Vercel deploy | **Pending** (needs API key and deploy creds) |
+| Card Studio | Built and committed; typecheck clean, 22/22 unit tests pass |
+| Image generation (OpenRouter, 6 models) | Wired + tested against **mocked** images only |
+| Live OpenRouter/OpenAI run + Vercel deploy | **Pending** (needs API key and deploy creds) |
 
 The screenshots above are from the running apps; the Studio images were produced
 with the mock-image test harness, not a live model.
