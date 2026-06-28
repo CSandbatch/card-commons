@@ -49,6 +49,7 @@ function Studio() {
   const [batch, setBatch] = useState<CallingCardLayerRole[]>([]);
   const [defaultModelId, setDefaultModelId] = useState<string>(DEFAULT_MODEL_ID);
   const [modelId, setModelId] = useState<string>(DEFAULT_MODEL_ID);
+  const [remaining, setRemaining] = useState<number | null>(null);
   const exportPng = useRef<null | (() => Promise<Blob>)>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const zipInput = useRef<HTMLInputElement>(null);
@@ -60,6 +61,10 @@ function Studio() {
       const stored = await getSetting<string>("defaultModelId");
       if (stored && findModel(stored)) { setDefaultModelId(stored); setModelId(stored); }
     })();
+    void fetch("/api/access", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => { if (typeof data.remaining === "number") setRemaining(data.remaining); })
+      .catch(() => {});
   }, []);
 
   const effectiveModel = resolveModel(modelId);
@@ -110,6 +115,7 @@ function Studio() {
       }
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Image request failed.");
+      if (typeof body.remaining === "number") setRemaining(body.remaining);
       setCandidate(body.candidate as GenerationCandidate);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Image request failed.");
@@ -148,6 +154,7 @@ function Studio() {
         <div className="top-actions">
           <span className={`status ${validation?.valid ? "ok" : "bad"}`}>{validation?.valid ? "Valid v0.1.0" : "Needs attention"}</span>
           <span className="save-state">{persistence === "saving" ? "Saving locally…" : persistence === "error" ? "Save blocked" : "Saved locally"}</span>
+          {remaining !== null && <span className="save-state" title="Image requests left this session">{remaining} left</span>}
           <button onClick={undo} disabled={!history.length}>Undo</button>
           <button onClick={redo} disabled={!future.length}>Redo</button>
         </div>
@@ -234,7 +241,7 @@ function Studio() {
               <select value={modelId} onChange={(event) => setModelId(event.target.value)}>
                 {IMAGE_MODELS.map((model) => (
                   <option key={model.id} value={model.id} disabled={!supportsRole(model, selectedRole)}>
-                    {model.label}{supportsRole(model, selectedRole) ? "" : " — no transparency"}
+                    {model.label} · {model.costHint}{supportsRole(model, selectedRole) ? "" : " — no transparency"}
                   </option>
                 ))}
               </select>

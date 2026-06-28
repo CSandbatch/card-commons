@@ -8,7 +8,8 @@
     "start": "next start --port 3100",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "smoke:openrouter": "node scripts/smoke-openrouter.mjs"
   },
   "dependencies": {
     "ajv": "^8.17.1",

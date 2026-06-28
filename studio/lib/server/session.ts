@@ -3,7 +3,14 @@ import type { NextRequest, NextResponse } from "next/server";
 
 export const COOKIE_NAME = "card_commons_pilot";
 const EIGHT_HOURS = 8 * 60 * 60;
-const MAX_ALLOWANCE = 20;
+const DEFAULT_ALLOWANCE = 20;
+
+/** Per-session image budget. Configurable via PILOT_IMAGE_ALLOWANCE (1–200). */
+export function imageAllowance(): number {
+  const raw = Number(process.env.PILOT_IMAGE_ALLOWANCE);
+  if (!Number.isFinite(raw)) return DEFAULT_ALLOWANCE;
+  return Math.min(200, Math.max(1, Math.floor(raw)));
+}
 
 export interface PilotSession {
   exp: number;
@@ -47,7 +54,7 @@ export function verifySession(token?: string): PilotSession | null {
 export function createSession(): PilotSession {
   return {
     exp: Math.floor(Date.now() / 1000) + EIGHT_HOURS,
-    remaining: MAX_ALLOWANCE,
+    remaining: imageAllowance(),
     nonce: randomBytes(12).toString("hex"),
   };
 }

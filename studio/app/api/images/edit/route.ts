@@ -44,8 +44,9 @@ export async function POST(request: NextRequest) {
     const candidate = await imageProvider(selection.model.id).edit({
       role: role as typeof roles[number], instruction, sourceAssetId, referenceAssetIds, cardContext, modelId: selection.model.id,
     }, images);
-    const response = NextResponse.json({ candidate }, { headers: { "Cache-Control": "no-store" } });
-    setSessionCookie(response, { ...auth.session, remaining: auth.session.remaining - 1 });
+    const remaining = auth.session.remaining - 1;
+    const response = NextResponse.json({ candidate, remaining }, { headers: { "Cache-Control": "no-store" } });
+    setSessionCookie(response, { ...auth.session, remaining });
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "";

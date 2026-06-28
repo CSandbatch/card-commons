@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
   if (!validatePasscode(passcode)) {
     return NextResponse.json({ error: "Invalid passcode." }, { status: 401, headers: { "Cache-Control": "no-store" } });
   }
-  const response = NextResponse.json({ authenticated: true, remaining: 20 }, { headers: { "Cache-Control": "no-store" } });
-  setSessionCookie(response, createSession());
+  const session = createSession();
+  const response = NextResponse.json({ authenticated: true, remaining: session.remaining }, { headers: { "Cache-Control": "no-store" } });
+  setSessionCookie(response, session);
   return response;
 }

@@ -17,10 +17,14 @@ export interface ImageModel {
   maxReferences: number;
   /** Whether the model can produce a transparent background (needed for emblems). */
   transparency: boolean;
+  /** Indicative cost, shown to the user before they generate. Not exact billing. */
+  costHint: string;
   note?: string;
 }
 
 // IDs and capabilities verified against OpenRouter's unified image catalogue.
+// costHint values are indicative as of 2026-06 — confirm live prices at
+// https://openrouter.ai/collections/image-models before a paid pilot.
 export const IMAGE_MODELS: ImageModel[] = [
   {
     id: "openai/gpt-image-1",
@@ -30,6 +34,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "openai/gpt-image-1",
     maxReferences: 16,
     transparency: true,
+    costHint: "usage-metered",
     note: "Strong prompt adherence; supports transparent emblems.",
   },
   {
@@ -40,6 +45,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "google/gemini-3.1-flash-image",
     maxReferences: 14,
     transparency: false,
+    costHint: "usage-metered",
     note: "Best-in-class editing and multi-turn refinement.",
   },
   {
@@ -50,6 +56,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "bytedance-seed/seedream-4.5",
     maxReferences: 14,
     transparency: false,
+    costHint: "~$0.04/image",
     note: "High-resolution with strong editing consistency.",
   },
   {
@@ -60,6 +67,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "black-forest-labs/flux.2-pro",
     maxReferences: 8,
     transparency: false,
+    costHint: "~$0.05/image",
     note: "Fast, high-quality general generator.",
   },
   {
@@ -70,6 +78,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "x-ai/grok-imagine-image-quality",
     maxReferences: 3,
     transparency: false,
+    costHint: "~$0.04/image",
     note: "Photorealistic detail and in-image text.",
   },
   {
@@ -80,6 +89,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     routeModel: "gpt-image-2",
     maxReferences: 16,
     transparency: true,
+    costHint: "OpenAI quality tiers",
     note: "Bypasses OpenRouter via the OpenAI API key.",
   },
 ];

@@ -46,7 +46,25 @@ model cannot produce it.
 - `OPENAI_IMAGE_MODEL`: direct-path model, defaults to `gpt-image-2`.
 - `PILOT_ACCESS_HASH`: lowercase SHA-256 hex digest of the shared passcode.
 - `SESSION_SIGNING_SECRET`: a random secret of at least 32 bytes.
+- `PILOT_IMAGE_ALLOWANCE`: images per 8-hour session (1–200, default 20).
 - `STUDIO_MOCK_IMAGES`: leave unset or `false`.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full Vercel pilot checklist.
+
+## Live smoke test
+
+Before sharing the pilot, confirm the OpenRouter path end to end. From this
+directory with `OPENROUTER_API_KEY` set:
+
+```bash
+npm run smoke:openrouter            # default model: background + transparent emblem
+npm run smoke:openrouter -- --all   # every OpenRouter model
+npm run smoke:openrouter -- --edit  # also exercise the edit (input_references) path
+```
+
+It verifies each model returns a decodable image, that the emblem run has an
+alpha channel, and that the request shape is accepted. It spends real credits
+and is never run in CI.
 
 Deploy the `studio` directory as an independent Vercel project. Add the
 resulting URL to the GitHub repository variable `NEXT_PUBLIC_STUDIO_URL`; the

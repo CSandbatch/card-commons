@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
   if (!selection.ok) return selection.error;
   try {
     const candidate = await imageProvider(selection.model.id).generate(parsed.data);
-    const response = NextResponse.json({ candidate }, { headers: { "Cache-Control": "no-store" } });
-    setSessionCookie(response, { ...auth.session, remaining: auth.session.remaining - 1 });
+    const remaining = auth.session.remaining - 1;
+    const response = NextResponse.json({ candidate, remaining }, { headers: { "Cache-Control": "no-store" } });
+    setSessionCookie(response, { ...auth.session, remaining });
     return response;
   } catch (error) {
     const status = typeof error === "object" && error && "status" in error ? Number(error.status) : 500;

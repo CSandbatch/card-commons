@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
-import { createSession, signSession, validatePasscode, verifySession } from "@/lib/server/session";
+import { createSession, imageAllowance, signSession, validatePasscode, verifySession } from "@/lib/server/session";
 import { imageProvider } from "@/lib/server/provider";
 import { assetFromCandidate } from "@/lib/assets";
 import { validateAssetMetadata } from "@/lib/validation";
@@ -13,7 +13,21 @@ describe("pilot session and provider boundary", () => {
     delete process.env.SESSION_SIGNING_SECRET;
     delete process.env.STUDIO_MOCK_IMAGES;
     delete process.env.OPENROUTER_API_KEY;
+    delete process.env.PILOT_IMAGE_ALLOWANCE;
     vi.unstubAllGlobals();
+  });
+
+  it("derives a configurable, clamped per-session image allowance", () => {
+    expect(imageAllowance()).toBe(20);
+    process.env.PILOT_IMAGE_ALLOWANCE = "5";
+    expect(imageAllowance()).toBe(5);
+    expect(createSession().remaining).toBe(5);
+    process.env.PILOT_IMAGE_ALLOWANCE = "9999";
+    expect(imageAllowance()).toBe(200);
+    process.env.PILOT_IMAGE_ALLOWANCE = "0";
+    expect(imageAllowance()).toBe(1);
+    process.env.PILOT_IMAGE_ALLOWANCE = "nonsense";
+    expect(imageAllowance()).toBe(20);
   });
 
   it("uses constant-length hashes and rejects modified cookies", () => {
