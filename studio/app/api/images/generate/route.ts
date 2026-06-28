@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { authorizeImageRequest } from "@/lib/server/guards";
+import { authorizeImageRequest, selectModel } from "@/lib/server/guards";
 import { imageProvider } from "@/lib/server/provider";
 import { setSessionCookie } from "@/lib/server/session";
 
@@ -13,6 +13,7 @@ const requestSchema = z.object({
     templateId: z.literal("calling-card-nocturne-v1"),
   }),
   variantOfAssetId: z.string().max(200).optional(),
+  modelId: z.string().max(120).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -22,8 +23,10 @@ export async function POST(request: NextRequest) {
   try { parsed = requestSchema.safeParse(await request.json()); }
   catch { return NextResponse.json({ error: "Invalid JSON." }, { status: 400 }); }
   if (!parsed.success) return NextResponse.json({ error: "Generation request is invalid.", details: parsed.error.flatten() }, { status: 400 });
+  const selection = selectModel(parsed.data.modelId, parsed.data.role);
+  if (!selection.ok) return selection.error;
   try {
-    const candidate = await imageProvider().generate(parsed.data);
+    const candidate = await imageProvider(selection.model.id).generate(parsed.data);
     const response = NextResponse.json({ candidate }, { headers: { "Cache-Control": "no-store" } });
     setSessionCookie(response, { ...auth.session, remaining: auth.session.remaining - 1 });
     return response;

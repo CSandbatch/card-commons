@@ -1,13 +1,21 @@
 import OpenAI, { toFile } from "openai";
+import { imageSize } from "image-size";
 import type {
   CallingCardLayerRole, EditRequest, GenerationCandidate, GenerationRequest, ImageGenerationProvider,
 } from "../types";
+import { type ImageModel, resolveModel } from "../models";
 import { MAX_SERVER_OUTPUT_BYTES } from "./guards";
+
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/images";
 
 function settings(role: CallingCardLayerRole) {
   return role === "emblem"
     ? { size: "1024x1024" as const, output_format: "png" as const, background: "transparent" as const, width: 1024, height: 1024 }
     : { size: "1024x1536" as const, output_format: "webp" as const, background: "opaque" as const, width: 1024, height: 1536 };
+}
+
+function aspectRatio(role: CallingCardLayerRole) {
+  return role === "emblem" ? "1:1" : "2:3";
 }
 
 function promptFor(request: GenerationRequest) {
@@ -20,6 +28,15 @@ function promptFor(request: GenerationRequest) {
   ].join("\n");
 }
 
+function editPromptFor(request: EditRequest) {
+  return [
+    `Edit the ${request.role} visual layer for a portrait calling card.`,
+    request.instruction,
+    `Card message: ${request.cardContext.message}`,
+    "Preserve useful composition from the first image. Additional images are references only. Do not render text or a card border.",
+  ].join("\n");
+}
+
 async function retryOnce<T>(operation: () => Promise<T>) {
   try {
     return await operation();
@@ -28,6 +45,11 @@ async function retryOnce<T>(operation: () => Promise<T>) {
     if (status !== 429 && status < 500) throw error;
     return operation();
   }
+}
+
+function mimeFromType(type: string | undefined): string {
+  if (!type) return "image/png";
+  return `image/${type === "jpg" ? "jpeg" : type}`;
 }
 
 function outputCandidate(
@@ -70,12 +92,7 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 
   async edit(request: EditRequest, images: Array<{ bytes: Uint8Array; mimeType: string }>) {
     const target = settings(request.role);
-    const prompt = [
-      `Edit the ${request.role} visual layer for a portrait calling card.`,
-      request.instruction,
-      `Card message: ${request.cardContext.message}`,
-      "Preserve useful composition from the first image. Additional images are references only. Do not render text or a card border.",
-    ].join("\n");
+    const prompt = editPromptFor(request);
     const uploads = await Promise.all(images.map((image, index) =>
       toFile(image.bytes, `reference-${index}.${image.mimeType.split("/")[1]}`, { type: image.mimeType })));
     const result = await retryOnce(() => this.client.images.edit({
@@ -98,7 +115,73 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
   }
 }
 
+export class OpenRouterImageProvider implements ImageGenerationProvider {
+  constructor(private readonly model: ImageModel) {}
+
+  private headers(): Record<string, string> {
+    return {
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.OPENROUTER_SITE_URL || "https://card-commons.example",
+      "X-Title": "Card Commons Studio",
+    };
+  }
+
+  private async call(body: Record<string, unknown>) {
+    return retryOnce(async () => {
+      const response = await fetch(OPENROUTER_URL, {
+        method: "POST", headers: this.headers(), body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const detail = (await response.text().catch(() => "")).slice(0, 200);
+        const lowered = detail.toLowerCase();
+        const message = lowered.includes("safety") || lowered.includes("moderat")
+          ? `safety: ${detail}` : `OpenRouter ${response.status}: ${detail}`;
+        throw Object.assign(new Error(message), { status: response.status });
+      }
+      return response.json() as Promise<{ data?: Array<{ b64_json?: string; media_type?: string }> }>;
+    });
+  }
+
+  private toCandidate(
+    role: CallingCardLayerRole, payload: Awaited<ReturnType<OpenRouterImageProvider["call"]>>,
+    prompt: string, sourceAssetIds: string[],
+  ) {
+    const item = payload.data?.[0];
+    const b64 = item?.b64_json;
+    if (!b64) throw new Error("The image provider returned no image.");
+    const bytes = Buffer.from(b64, "base64");
+    const dimensions = imageSize(bytes);
+    const target = settings(role);
+    return outputCandidate(role, b64, item?.media_type || mimeFromType(dimensions.type),
+      dimensions.width || target.width, dimensions.height || target.height, {
+        provider: "openrouter", model: this.model.id, prompt,
+        settings: { routeModel: this.model.routeModel, aspectRatio: aspectRatio(role) },
+        sourceAssetIds, generatedAt: new Date().toISOString(),
+      });
+  }
+
+  async generate(request: GenerationRequest) {
+    const prompt = promptFor(request);
+    const payload = await this.call({ model: this.model.routeModel, prompt, aspect_ratio: aspectRatio(request.role) });
+    return this.toCandidate(request.role, payload, prompt, request.variantOfAssetId ? [request.variantOfAssetId] : []);
+  }
+
+  async edit(request: EditRequest, images: Array<{ bytes: Uint8Array; mimeType: string }>) {
+    const prompt = editPromptFor(request);
+    const input_references = images.slice(0, this.model.maxReferences).map((image) => ({
+      type: "image_url",
+      image_url: { url: `data:${image.mimeType};base64,${Buffer.from(image.bytes).toString("base64")}` },
+    }));
+    const payload = await this.call({
+      model: this.model.routeModel, prompt, input_references, aspect_ratio: aspectRatio(request.role),
+    });
+    return this.toCandidate(request.role, payload, prompt, [request.sourceAssetId, ...request.referenceAssetIds]);
+  }
+}
+
 class MockImageProvider implements ImageGenerationProvider {
+  constructor(private readonly modelId?: string) {}
   async generate(request: GenerationRequest) {
     this.maybeFail();
     return this.make(request.role, request.prompt, request.variantOfAssetId ? [request.variantOfAssetId] : []);
@@ -128,15 +211,20 @@ class MockImageProvider implements ImageGenerationProvider {
       id: `candidate-${crypto.randomUUID()}`, role,
       encoded: Buffer.from(svg).toString("base64"), mimeType: "image/svg+xml", width, height,
       provenance: {
-        provider: "mock", model: "deterministic-ci", prompt,
+        provider: "mock", model: resolveModel(this.modelId).id, prompt,
         settings: { size: `${width}x${height}` }, sourceAssetIds, generatedAt: new Date().toISOString(),
       },
     };
   }
 }
 
-export function imageProvider(): ImageGenerationProvider {
-  if (process.env.STUDIO_MOCK_IMAGES === "true") return new MockImageProvider();
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured.");
-  return new OpenAIImageProvider();
+export function imageProvider(modelId?: string): ImageGenerationProvider {
+  if (process.env.STUDIO_MOCK_IMAGES === "true") return new MockImageProvider(modelId);
+  const model = resolveModel(modelId);
+  if (model.route === "openai-direct") {
+    if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured.");
+    return new OpenAIImageProvider();
+  }
+  if (!process.env.OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not configured.");
+  return new OpenRouterImageProvider(model);
 }

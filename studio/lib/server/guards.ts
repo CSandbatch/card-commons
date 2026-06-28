@@ -1,6 +1,8 @@
 import { imageSize } from "image-size";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { findModel, type ImageModel, modelsForRole, resolveModel, supportsRole } from "../models";
+import type { CallingCardLayerRole } from "../types";
 import { hasValidOrigin, sessionFromRequest, type PilotSession } from "./session";
 
 export const MAX_SERVER_IMAGE_BYTES = 12 * 1024 * 1024;
@@ -15,6 +17,28 @@ export function authorizeImageRequest(request: NextRequest): Authorization {
   if (!session) return { ok: false, error: NextResponse.json({ error: "Pilot access is required." }, { status: 401 }) };
   if (session.remaining <= 0) return { ok: false, error: NextResponse.json({ error: "This session has used its 20 image requests." }, { status: 429 }) };
   return { ok: true, session };
+}
+
+type ModelSelection = { ok: true; model: ImageModel } | { ok: false; error: NextResponse };
+
+export function selectModel(modelId: string | undefined, role: CallingCardLayerRole): ModelSelection {
+  if (modelId !== undefined && modelId !== "" && !findModel(modelId)) {
+    return { ok: false, error: NextResponse.json({ error: "That image model is not available." }, { status: 400, headers: { "Cache-Control": "no-store" } }) };
+  }
+  const model = resolveModel(modelId);
+  if (!supportsRole(model, role)) {
+    return {
+      ok: false,
+      error: NextResponse.json(
+        {
+          error: `${model.label} cannot render a transparent emblem. Choose a transparency-capable model.`,
+          suggestedModelIds: modelsForRole(role).map((option) => option.id),
+        },
+        { status: 400, headers: { "Cache-Control": "no-store" } },
+      ),
+    };
+  }
+  return { ok: true, model };
 }
 
 export function validateImageBytes(bytes: Uint8Array, mimeType: string) {

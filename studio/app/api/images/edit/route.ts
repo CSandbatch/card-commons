@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { authorizeImageRequest, validateImageBytes } from "@/lib/server/guards";
+import { authorizeImageRequest, selectModel, validateImageBytes } from "@/lib/server/guards";
 import { imageProvider } from "@/lib/server/provider";
 import { setSessionCookie } from "@/lib/server/session";
 
@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
   let cardContext;
   try { cardContext = contextSchema.parse(JSON.parse(String(form.get("cardContext")))); }
   catch { return NextResponse.json({ error: "Card context is invalid." }, { status: 400 }); }
+  const modelField = form.get("modelId");
+  const modelId = typeof modelField === "string" && modelField ? modelField : undefined;
+  const selection = selectModel(modelId, role as typeof roles[number]);
+  if (!selection.ok) return selection.error;
   const files = [source, ...form.getAll("references").filter((item): item is File => item instanceof File)].slice(0, 4);
   const referenceAssetIds = String(form.get("referenceAssetIds") ?? "").split(",").filter(Boolean).slice(0, 3);
   try {
@@ -37,8 +41,8 @@ export async function POST(request: NextRequest) {
       validateImageBytes(bytes, file.type);
       return { bytes, mimeType: file.type };
     }));
-    const candidate = await imageProvider().edit({
-      role: role as typeof roles[number], instruction, sourceAssetId, referenceAssetIds, cardContext,
+    const candidate = await imageProvider(selection.model.id).edit({
+      role: role as typeof roles[number], instruction, sourceAssetId, referenceAssetIds, cardContext, modelId: selection.model.id,
     }, images);
     const response = NextResponse.json({ candidate }, { headers: { "Cache-Control": "no-store" } });
     setSessionCookie(response, { ...auth.session, remaining: auth.session.remaining - 1 });

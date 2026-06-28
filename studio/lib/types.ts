@@ -97,6 +97,7 @@ export interface GenerationRequest {
   prompt: string;
   cardContext: { message: string; signature: string; templateId: string };
   variantOfAssetId?: string;
+  modelId?: string;
 }
 
 export interface EditRequest {
@@ -105,6 +106,7 @@ export interface EditRequest {
   sourceAssetId: string;
   referenceAssetIds: string[];
   cardContext: GenerationRequest["cardContext"];
+  modelId?: string;
 }
 
 export interface GenerationCandidate {

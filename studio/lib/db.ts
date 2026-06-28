@@ -41,6 +41,14 @@ export async function getAssets(ids?: string[]) {
   return ids ? all.filter((asset) => ids.includes(asset.id)) : all;
 }
 
+export async function getSetting<T>(key: string): Promise<T | undefined> {
+  return (await db()).get("settings", key) as Promise<T | undefined>;
+}
+
+export async function setSetting(key: string, value: unknown) {
+  return (await db()).put("settings", value, key);
+}
+
 export async function clearStudio() {
   const database = await db();
   const transaction = database.transaction(["projects", "assets"], "readwrite");

@@ -70,6 +70,28 @@ describe("Studio route protections", () => {
     expect((await response.json()).candidate.provenance.provider).toBe("mock");
   });
 
+  it("rejects unknown models and records the selected model in provenance", async () => {
+    const unknown = await generatePost(jsonRequest("/api/images/generate", { ...validBody, modelId: "made/up" }, sessionCookie()));
+    expect(unknown.status).toBe(400);
+
+    const chosen = await generatePost(jsonRequest("/api/images/generate",
+      { ...validBody, role: "background", modelId: "x-ai/grok-imagine-image-quality" }, sessionCookie()));
+    expect(chosen.status).toBe(200);
+    expect((await chosen.json()).candidate.provenance.model).toBe("x-ai/grok-imagine-image-quality");
+  });
+
+  it("gates a transparent emblem to transparency-capable models", async () => {
+    const blocked = await generatePost(jsonRequest("/api/images/generate",
+      { ...validBody, role: "emblem", modelId: "x-ai/grok-imagine-image-quality" }, sessionCookie()));
+    expect(blocked.status).toBe(400);
+    const body = await blocked.json();
+    expect(body.suggestedModelIds).toContain("openai/gpt-image-1");
+
+    const allowed = await generatePost(jsonRequest("/api/images/generate",
+      { ...validBody, role: "emblem", modelId: "openai/gpt-image-1" }, sessionCookie()));
+    expect(allowed.status).toBe(200);
+  });
+
   it.each([
     ["moderation", 422],
     ["rate", 429],

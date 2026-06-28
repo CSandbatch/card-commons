@@ -4,7 +4,10 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AccessGate from "./access-gate";
 import { assetFromCandidate, assetFromUpload } from "@/lib/assets";
-import { getAssets, saveAsset } from "@/lib/db";
+import { getAssets, getSetting, saveAsset, setSetting } from "@/lib/db";
+import {
+  DEFAULT_MODEL_ID, findModel, IMAGE_MODELS, modelsForRole, resolveModel, supportsRole,
+} from "@/lib/models";
 import { exportProjectZip, importProjectZip } from "@/lib/portable";
 import { useStudioStore } from "@/lib/store";
 import { IMAGE_ROLES, layerFor, TEMPLATE_ID } from "@/lib/template";
@@ -44,12 +47,24 @@ function Studio() {
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
   const [batch, setBatch] = useState<CallingCardLayerRole[]>([]);
+  const [defaultModelId, setDefaultModelId] = useState<string>(DEFAULT_MODEL_ID);
+  const [modelId, setModelId] = useState<string>(DEFAULT_MODEL_ID);
   const exportPng = useRef<null | (() => Promise<Blob>)>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const zipInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => { void initialize(); }, [initialize]);
   useEffect(() => { setPrompt(defaultPrompt(selectedRole)); }, [selectedRole]);
+  useEffect(() => {
+    void (async () => {
+      const stored = await getSetting<string>("defaultModelId");
+      if (stored && findModel(stored)) { setDefaultModelId(stored); setModelId(stored); }
+    })();
+  }, []);
+
+  const effectiveModel = resolveModel(modelId);
+  const roleSupported = supportsRole(effectiveModel, selectedRole);
+  const emblemModelId = modelsForRole("emblem")[0]?.id ?? DEFAULT_MODEL_ID;
   const registerExporter = useCallback((fn: () => Promise<Blob>) => { exportPng.current = fn; }, []);
   const selectedLayer = project ? layerFor(project, selectedRole) : undefined;
   const selectedAsset = assets.find((asset) => asset.id === selectedLayer?.assetId);
@@ -81,6 +96,7 @@ function Studio() {
         form.set("cardContext", JSON.stringify(context));
         form.set("sourceAssetId", source.id);
         form.set("image", source.blob, `${source.id}.image`);
+        form.set("modelId", modelId);
         const references = assets.filter((asset) => referenceAssetIds.includes(asset.id)).slice(0, 3);
         form.set("referenceAssetIds", references.map((asset) => asset.id).join(","));
         references.forEach((asset) => form.append("references", asset.blob, `${asset.id}.image`));
@@ -89,7 +105,7 @@ function Studio() {
         response = await fetch("/api/images/generate", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ role, prompt: role === selectedRole ? prompt : defaultPrompt(role), cardContext: context }),
+          body: JSON.stringify({ role, prompt: role === selectedRole ? prompt : defaultPrompt(role), cardContext: context, modelId }),
         });
       }
       const body = await response.json();
@@ -101,7 +117,7 @@ function Studio() {
     } finally {
       setBusy("");
     }
-  }, [assets, context, instruction, project, prompt, referenceAssetIds, selectedRole, setCandidate]);
+  }, [assets, context, instruction, modelId, project, prompt, referenceAssetIds, selectedRole, setCandidate]);
 
   useEffect(() => {
     if (batch.length && !candidate && !busy) void requestGeneration(batch[0]);
@@ -149,9 +165,19 @@ function Studio() {
           <section>
             <div className="section-heading"><h2>Visual layers</h2>
               <button className="quiet" onClick={() => {
-                const missing = IMAGE_ROLES.filter((role) => !layerFor(project, role)?.assetId);
-                if (!missing.length) setNotice("Every visual layer already has an asset.");
-                else setBatch(missing);
+                let missing = IMAGE_ROLES.filter((role) => !layerFor(project, role)?.assetId);
+                let skippedEmblem = false;
+                if (missing.includes("emblem") && !supportsRole(effectiveModel, "emblem")) {
+                  missing = missing.filter((role) => role !== "emblem");
+                  skippedEmblem = true;
+                }
+                if (!missing.length) setNotice(skippedEmblem
+                  ? `${effectiveModel.label} cannot make a transparent emblem; switch models to generate it.`
+                  : "Every visual layer already has an asset.");
+                else {
+                  setBatch(missing);
+                  if (skippedEmblem) setNotice(`Emblem skipped: ${effectiveModel.label} has no transparency. Switch models for the emblem.`);
+                }
               }}>Generate all missing</button>
             </div>
             <div className="layer-list">
@@ -204,10 +230,33 @@ function Studio() {
               catch (error) { setNotice(error instanceof Error ? error.message : "Upload failed."); }
               event.target.value = "";
             }} />
+            <label>Image model
+              <select value={modelId} onChange={(event) => setModelId(event.target.value)}>
+                {IMAGE_MODELS.map((model) => (
+                  <option key={model.id} value={model.id} disabled={!supportsRole(model, selectedRole)}>
+                    {model.label}{supportsRole(model, selectedRole) ? "" : " — no transparency"}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="button-row">
+              <button className="quiet" disabled={modelId === defaultModelId}
+                onClick={async () => { await setSetting("defaultModelId", modelId); setDefaultModelId(modelId); setNotice(`${effectiveModel.label} set as default model.`); }}>
+                Make default
+              </button>
+            </div>
+            {!roleSupported && (
+              <p className="model-warning" role="status">
+                {effectiveModel.label} cannot render a transparent emblem.{" "}
+                <button className="link" onClick={() => setModelId(emblemModelId)}>
+                  Switch to {resolveModel(emblemModelId).label}
+                </button>
+              </p>
+            )}
             <div className="button-row">
               <button onClick={() => fileInput.current?.click()}>{selectedAsset ? "Replace" : "Upload"}</button>
-              <button onClick={() => void requestGeneration(selectedRole)}>Generate</button>
-              <button onClick={() => void requestGeneration(selectedRole, "variant")} disabled={!selectedAsset}>Variant</button>
+              <button onClick={() => void requestGeneration(selectedRole)} disabled={!roleSupported}>Generate</button>
+              <button onClick={() => void requestGeneration(selectedRole, "variant")} disabled={!selectedAsset || !roleSupported}>Variant</button>
               <button onClick={() => dispatch({ type: "remove-asset", role: selectedRole })} disabled={!selectedAsset}>Remove</button>
             </div>
             <label>Generation prompt<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} /></label>
@@ -231,7 +280,7 @@ function Studio() {
                 ))}
               </fieldset>
             )}
-            <button className="wide" onClick={() => void requestGeneration(selectedRole, "edit")} disabled={!selectedAsset}>Edit current image</button>
+            <button className="wide" onClick={() => void requestGeneration(selectedRole, "edit")} disabled={!selectedAsset || !roleSupported}>Edit current image</button>
           </section>
 
           <section>

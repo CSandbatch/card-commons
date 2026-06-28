@@ -19,10 +19,31 @@ The editor opens at <http://localhost:3100>. Cards and accepted binary assets
 are stored in browser IndexedDB. They are never uploaded unless an asset is
 explicitly sent as the source or reference for an image edit.
 
+## Image models
+
+Generation runs through OpenRouter's unified image API, with the direct OpenAI
+API kept as one option. A global default model is persisted locally and can be
+overridden per generation from the inspector. Selectable models:
+
+| Model | OpenRouter ID | Edit refs | Transparent emblem |
+| --- | --- | --- | --- |
+| OpenAI GPT-Image | `openai/gpt-image-1` | 16 | ✅ |
+| Gemini Flash Image (Nano Banana) | `google/gemini-3.1-flash-image` | 14 | ❌ |
+| Seedream 4.5 | `bytedance-seed/seedream-4.5` | 14 | ❌ |
+| FLUX.2 Pro | `black-forest-labs/flux.2-pro` | 8 | ❌ |
+| Grok Imagine | `x-ai/grok-imagine-image-quality` | 3 | ❌ |
+| OpenAI GPT-Image (direct) | OpenAI API (`gpt-image-2`) | 16 | ✅ |
+
+The emblem layer needs a transparent background, so it is gated to
+transparency-capable models; the UI offers a one-click switch when the selected
+model cannot produce it.
+
 ## Production variables
 
-- `OPENAI_API_KEY`: server-only OpenAI credential.
-- `OPENAI_IMAGE_MODEL`: defaults to `gpt-image-2`.
+- `OPENROUTER_API_KEY`: server-only OpenRouter credential (most models).
+- `OPENROUTER_SITE_URL`: optional attribution header sent to OpenRouter.
+- `OPENAI_API_KEY`: server-only OpenAI credential (direct GPT-Image option only).
+- `OPENAI_IMAGE_MODEL`: direct-path model, defaults to `gpt-image-2`.
 - `PILOT_ACCESS_HASH`: lowercase SHA-256 hex digest of the shared passcode.
 - `SESSION_SIGNING_SECRET`: a random secret of at least 32 bytes.
 - `STUDIO_MOCK_IMAGES`: leave unset or `false`.

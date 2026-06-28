@@ -45,6 +45,8 @@ h2 { margin-bottom: .8rem; font-size: .92rem; letter-spacing: .04em; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
 .section-heading h2 { margin: 0; }
 .quiet { background: transparent; }
+.model-warning { color: var(--gold); font-size: .76rem; margin: 0; }
+.link { background: transparent; border: none; color: var(--purple); padding: 0; text-decoration: underline; cursor: pointer; font: inherit; }
 .danger { color: var(--danger); border-color: #6a3734; background: #2c1819; }
 .wide { width: 100%; }
 .layer-list { display: grid; gap: .35rem; }
