@@ -120,8 +120,8 @@ flowchart LR
 
 The first product proves four loops:
 
-1. Create a structured card from a template. *(Studio: in progress)*
-2. Arrange cards into a stack, deck, or series.
+1. Create a structured card from a template. *(Studio: built — live AI generation verified)*
+2. Arrange cards into a stack, deck, or series. *(specified)*
 3. Publish a card or collection at a stable URL.
 4. Build and play a prompt-response game, then remix it non-destructively.
 
@@ -153,12 +153,14 @@ user research, and protocol discussion.
 | --- | --- |
 | Specs, schemas, OpenAPI, whitepaper | Published and committed |
 | Pitch-deck site | Built; deploys to GitHub Pages |
-| Card Studio | Built and committed; typecheck clean, 22/22 unit tests pass |
-| Image generation (OpenRouter, 6 models) | Wired + tested against **mocked** images only |
-| Live OpenRouter/OpenAI run + Vercel deploy | **Pending** (needs API key and deploy creds) |
+| Card Studio (create one calling card) | Built; typecheck clean, 23/23 unit tests, CI green |
+| Image generation (OpenRouter, 6 models) | ✅ **Verified live** — all six models generate; transparent emblem and the edit path confirmed |
+| Public hosting of the Studio | **Pending** — runs locally as a private pilot; no host chosen yet |
+| Rest of the MVP (stacks, publishing, games) | Specified, not yet built |
 
-The screenshots above are from the running apps; the Studio images were produced
-with the mock-image test harness, not a live model.
+The editor screenshots above use the deterministic mock harness for repeatable
+capture; live generation has since been verified against real models (see the
+[Studio README](studio/README.md#live-smoke-test)).
 
 Normative language in the protocol specification uses **MUST**, **SHOULD**, and
 **MAY** in their ordinary requirements sense; it is not yet an internet standard.

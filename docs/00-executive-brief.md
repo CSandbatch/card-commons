@@ -117,6 +117,24 @@ The most important unknowns are behavioral:
 The delivery plan therefore starts with prototypes and observed user tasks,
 not a universal platform.
 
+## Implementation status
+
+As of June 2026, the durable center exists on paper and the first slice exists
+in code:
+
+- **Published:** the nine specifications, JSON Schema contracts and fixtures,
+  the OpenAPI surface, the whitepaper, and this pitch site.
+- **Built and working:** a Card Studio that creates the first card kind (the
+  calling card) — constrained layer editing, local persistence, export, and
+  AI image generation **verified live across six models** through OpenRouter,
+  each generation recorded with provider and model provenance. It runs as a
+  private pilot and is not yet publicly hosted.
+- **Specified, not yet built:** stacks and collections, publishing to a URL,
+  the prompt-response game, and remix.
+
+The immediate next step is user evidence from the working Studio, not more
+surface area.
+
 ## Invitation
 
 Card Commons needs three kinds of participation: implementers to test the

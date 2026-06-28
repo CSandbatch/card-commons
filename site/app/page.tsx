@@ -106,6 +106,11 @@ export default function HomePage() {
             Nine engineering specifications, JSON Schema contracts, valid and
             invalid fixtures, an OpenAPI surface, and an evidence-led MVP plan.
           </p>
+          <p>
+            And a working Card Studio: it creates the first card type today—with
+            AI image generation verified live across six models. It runs as a
+            private pilot while the rest of the loop is still being built.
+          </p>
           <div className="proof-actions">
             <Link className="button button-dark" href="/specs">Open the specs <span>→</span></Link>
             <Link className="text-link" href="/research">Inspect the evidence</Link>

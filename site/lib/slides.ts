@@ -84,7 +84,8 @@ export const slides: Slide[] = [
     title: "Four experiences prove the thesis.",
     body: "Start narrow enough to observe real behavior before building a universal platform.",
     type: "journeys",
-    points: ["Create + publish one card", "Build + bulk-edit a stack", "Play a prompt-response game", "Fork without overwriting"]
+    points: ["Create + publish one card", "Build + bulk-edit a stack", "Play a prompt-response game", "Fork without overwriting"],
+    note: "Built today: a working Card Studio for the first experience (private pilot)."
   },
   {
     number: 9,
@@ -108,7 +109,8 @@ export const slides: Slide[] = [
     title: "Generate material—not the source of truth.",
     body: "AI may propose fields, art, card backs, and coherent variants. Humans accept outputs into provenance-bearing assets and new revisions.",
     type: "ai",
-    points: ["Meaning", "Context", "Generation job", "Review", "Accepted asset"]
+    points: ["Meaning", "Context", "Generation job", "Review", "Accepted asset"],
+    note: "Working today: image generation verified live across six models via OpenRouter."
   },
   {
     number: 12,
@@ -124,7 +126,8 @@ export const slides: Slide[] = [
     title: "Prototype the object. Observe the loop. Then choose the wedge.",
     body: "Market, pricing, and segment claims remain hypotheses until task research and repeated use support them.",
     type: "roadmap",
-    points: ["Protocol prototype", "Make + publish", "Arrange + play", "Remix + pilot"]
+    points: ["Protocol prototype", "Make + publish", "Arrange + play", "Remix + pilot"],
+    note: "Step one is real: a working single-card Studio. Next is user evidence, then the rest of the loop."
   },
   {
     number: 14,
