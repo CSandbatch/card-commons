@@ -3,6 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
+  // CI builds cold, so allow generous time for Next dev's first lazy compile.
+  workers: process.env.CI ? 1 : undefined,
+  expect: { timeout: 20000 },
   use: {
     baseURL: "http://127.0.0.1:3100",
     trace: "retain-on-failure",
@@ -12,9 +15,10 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
-    command: "npm run dev",
+    command: "npm run dev -- --hostname 127.0.0.1",
     url: "http://127.0.0.1:3100",
     reuseExistingServer: !process.env.CI,
+    timeout: 120000,
     env: {
       STUDIO_MOCK_IMAGES: "true",
       PILOT_ACCESS_HASH: "07ae38b93d8054d84aac37039c71ad114a8685a3857084d568f260ce69f0737f",

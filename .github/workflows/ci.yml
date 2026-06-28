@@ -62,6 +62,8 @@ jobs:
             --accept 200,204,206,429
             --exclude "https://support.substack.com/.*"
             --exclude "https://www.canva.com/.*"
+            --exclude "http://localhost.*"
+            --exclude ".*card-commons\.example.*"
             --exclude-path site/node_modules
             --exclude-path site/.next
             "**/*.md"
