@@ -19,6 +19,11 @@ export interface ImageModel {
   transparency: boolean;
   /** Indicative cost, shown to the user before they generate. Not exact billing. */
   costHint: string;
+  /**
+   * Explicit portrait size (e.g. "1024x1536") for models that ignore
+   * aspect_ratio. When absent, the request uses aspect_ratio instead.
+   */
+  portraitSize?: string;
   note?: string;
 }
 
@@ -57,7 +62,8 @@ export const IMAGE_MODELS: ImageModel[] = [
     maxReferences: 14,
     transparency: false,
     costHint: "~$0.04/image",
-    note: "High-resolution with strong editing consistency. Returns square output (cropped to the portrait layer).",
+    portraitSize: "1664x2496",
+    note: "High-resolution with strong editing consistency. Ignores aspect_ratio; uses an explicit portrait size.",
   },
   {
     id: "black-forest-labs/flux.2-pro",
@@ -68,7 +74,8 @@ export const IMAGE_MODELS: ImageModel[] = [
     maxReferences: 8,
     transparency: false,
     costHint: "~$0.05/image",
-    note: "Fast, high-quality general generator. Returns square output (cropped to the portrait layer).",
+    portraitSize: "1024x1536",
+    note: "Fast, high-quality general generator. Ignores aspect_ratio; uses an explicit portrait size.",
   },
   {
     id: "x-ai/grok-imagine-image-quality",

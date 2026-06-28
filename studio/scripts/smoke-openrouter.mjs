@@ -22,8 +22,8 @@ const OUT_DIR = new URL("../.smoke-out/", import.meta.url);
 const MODELS = [
   { id: "openai/gpt-image-1", transparency: true },
   { id: "google/gemini-3.1-flash-image", transparency: false },
-  { id: "bytedance-seed/seedream-4.5", transparency: false },
-  { id: "black-forest-labs/flux.2-pro", transparency: false },
+  { id: "bytedance-seed/seedream-4.5", transparency: false, portraitSize: "1664x2496" },
+  { id: "black-forest-labs/flux.2-pro", transparency: false, portraitSize: "1024x1536" },
   { id: "x-ai/grok-imagine-image-quality", transparency: false },
 ];
 
@@ -52,6 +52,9 @@ const runEdit = args.includes("--edit");
 const onlyModel = args.includes("--model") ? args[args.indexOf("--model") + 1] : null;
 
 const aspectFor = (role) => (role === "emblem" ? "1:1" : "2:3");
+// Match the provider: explicit size for models that ignore aspect_ratio.
+const sizingFor = (model, role) =>
+  model.portraitSize && role !== "emblem" ? { size: model.portraitSize } : { aspect_ratio: aspectFor(role) };
 const generatePrompt = (role) => [
   `Create the ${role} visual layer for a portrait calling card.`,
   role === "emblem"
@@ -96,10 +99,11 @@ mkdirSync(OUT_DIR, { recursive: true });
 const results = [];
 let firstGenerated = null;
 
-async function generate(modelId, role) {
+async function generate(model, role) {
+  const modelId = model.id;
   const label = `${modelId} · ${role}`;
   try {
-    const { payload, ms } = await call({ model: modelId, prompt: generatePrompt(role), aspect_ratio: aspectFor(role) });
+    const { payload, ms } = await call({ model: modelId, prompt: generatePrompt(role), ...sizingFor(model, role) });
     const item = payload.data?.[0];
     if (!item?.b64_json) throw new Error("response had no data[0].b64_json");
     const { bytes, dims, hasAlpha } = inspect(item.b64_json);
@@ -137,8 +141,8 @@ if (!targets.length) { console.error(`Unknown model: ${onlyModel}`); process.exi
 
 console.log(`Smoke testing ${targets.length} model(s) against ${ENDPOINT}\n`);
 for (const model of targets) {
-  await generate(model.id, "background");
-  if (model.transparency) await generate(model.id, "emblem");
+  await generate(model, "background");
+  if (model.transparency) await generate(model, "emblem");
 }
 if (runEdit) await edit(targets[0].id);
 

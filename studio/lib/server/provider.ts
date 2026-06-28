@@ -118,6 +118,13 @@ export class OpenAIImageProvider implements ImageGenerationProvider {
 export class OpenRouterImageProvider implements ImageGenerationProvider {
   constructor(private readonly model: ImageModel) {}
 
+  // Models that honor aspect_ratio get it; those that ignore it (FLUX, Seedream)
+  // get an explicit portrait size. Emblems are always square via aspect_ratio.
+  private sizing(role: CallingCardLayerRole): Record<string, string> {
+    if (this.model.portraitSize && role !== "emblem") return { size: this.model.portraitSize };
+    return { aspect_ratio: aspectRatio(role) };
+  }
+
   private headers(): Record<string, string> {
     return {
       "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
@@ -156,14 +163,14 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
     return outputCandidate(role, b64, item?.media_type || mimeFromType(dimensions.type),
       dimensions.width || target.width, dimensions.height || target.height, {
         provider: "openrouter", model: this.model.id, prompt,
-        settings: { routeModel: this.model.routeModel, aspectRatio: aspectRatio(role) },
+        settings: { routeModel: this.model.routeModel, ...this.sizing(role) },
         sourceAssetIds, generatedAt: new Date().toISOString(),
       });
   }
 
   async generate(request: GenerationRequest) {
     const prompt = promptFor(request);
-    const payload = await this.call({ model: this.model.routeModel, prompt, aspect_ratio: aspectRatio(request.role) });
+    const payload = await this.call({ model: this.model.routeModel, prompt, ...this.sizing(request.role) });
     return this.toCandidate(request.role, payload, prompt, request.variantOfAssetId ? [request.variantOfAssetId] : []);
   }
 
@@ -174,7 +181,7 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
       image_url: { url: `data:${image.mimeType};base64,${Buffer.from(image.bytes).toString("base64")}` },
     }));
     const payload = await this.call({
-      model: this.model.routeModel, prompt, input_references, aspect_ratio: aspectRatio(request.role),
+      model: this.model.routeModel, prompt, input_references, ...this.sizing(request.role),
     });
     return this.toCandidate(request.role, payload, prompt, [request.sourceAssetId, ...request.referenceAssetIds]);
   }
