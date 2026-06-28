@@ -10,6 +10,7 @@ const links = [
 ] as const;
 
 export function SiteHeader() {
+  const studioUrl = process.env.NEXT_PUBLIC_STUDIO_URL;
   return (
     <header className="site-header">
       <Link className="wordmark" href="/">
@@ -21,6 +22,11 @@ export function SiteHeader() {
           <Link href={href} key={href}>{label}</Link>
         ))}
       </nav>
+      {studioUrl && (
+        <a className="button button-small" href={studioUrl}>
+          Studio
+        </a>
+      )}
       <a
         className="button button-small"
         href="https://github.com/CSandbatch/card-commons"
@@ -30,4 +36,3 @@ export function SiteHeader() {
     </header>
   );
 }
-

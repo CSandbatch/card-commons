@@ -3,14 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "site"
+    "site",
+    "studio"
   ],
   "scripts": {
     "dev": "npm run dev --workspace site",
-    "build": "npm run build --workspace site",
-    "typecheck": "npm run typecheck --workspace site",
-    "test": "npm run test --workspace site",
+    "dev:studio": "npm run dev --workspace studio",
+    "build": "npm run build --workspace site && npm run build --workspace studio",
+    "build:site": "npm run build --workspace site",
+    "build:studio": "npm run build --workspace studio",
+    "typecheck": "npm run typecheck --workspace site && npm run typecheck --workspace studio",
+    "test": "npm run test --workspace site && npm run test --workspace studio",
     "test:e2e": "npm run test:e2e --workspace site",
+    "test:e2e:studio": "npm run test:e2e --workspace studio --",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#site/.next\"",
     "validate:schemas": "node scripts/validate-schemas.mjs",
     "validate:openapi": "redocly lint contracts/openapi.yaml",

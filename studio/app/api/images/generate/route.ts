@@ -1,0 +1,38 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { authorizeImageRequest } from "@/lib/server/guards";
+import { imageProvider } from "@/lib/server/provider";
+import { setSessionCookie } from "@/lib/server/session";
+
+const requestSchema = z.object({
+  role: z.enum(["background", "texture", "emblem", "foreground"]),
+  prompt: z.string().trim().min(3).max(4000),
+  cardContext: z.object({
+    message: z.string().max(1000),
+    signature: z.string().max(300),
+    templateId: z.literal("calling-card-nocturne-v1"),
+  }),
+  variantOfAssetId: z.string().max(200).optional(),
+});
+
+export async function POST(request: NextRequest) {
+  const auth = authorizeImageRequest(request);
+  if (!auth.ok) return auth.error;
+  let parsed;
+  try { parsed = requestSchema.safeParse(await request.json()); }
+  catch { return NextResponse.json({ error: "Invalid JSON." }, { status: 400 }); }
+  if (!parsed.success) return NextResponse.json({ error: "Generation request is invalid.", details: parsed.error.flatten() }, { status: 400 });
+  try {
+    const candidate = await imageProvider().generate(parsed.data);
+    const response = NextResponse.json({ candidate }, { headers: { "Cache-Control": "no-store" } });
+    setSessionCookie(response, { ...auth.session, remaining: auth.session.remaining - 1 });
+    return response;
+  } catch (error) {
+    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : 500;
+    const moderation = status === 400 && String(error).toLowerCase().includes("safety");
+    return NextResponse.json(
+      { error: moderation ? "The provider declined that image request." : "The image provider could not complete the request." },
+      { status: moderation ? 422 : status === 429 ? 429 : 502, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+}
