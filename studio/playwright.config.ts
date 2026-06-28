@@ -4,8 +4,11 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   // CI builds cold, so allow generous time for Next dev's first lazy compile.
+  // A global setup warms the routes first; timeouts give headroom on slow runners.
   workers: process.env.CI ? 1 : undefined,
-  expect: { timeout: 20000 },
+  globalSetup: process.env.CI ? "./e2e/global-setup.ts" : undefined,
+  timeout: 90000,
+  expect: { timeout: 30000 },
   use: {
     baseURL: "http://127.0.0.1:3100",
     trace: "retain-on-failure",
