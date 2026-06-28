@@ -1,0 +1,26 @@
+{
+  "name": "card-commons-publication",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "site"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace site",
+    "build": "npm run build --workspace site",
+    "typecheck": "npm run typecheck --workspace site",
+    "test": "npm run test --workspace site",
+    "test:e2e": "npm run test:e2e --workspace site",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#site/.next\"",
+    "validate:schemas": "node scripts/validate-schemas.mjs",
+    "validate:openapi": "redocly lint contracts/openapi.yaml",
+    "verify:pages": "node scripts/verify-pages-export.mjs",
+    "check": "npm run lint:md && npm run validate:schemas && npm run validate:openapi && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.13.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "markdownlint-cli2": "^0.18.1"
+  }
+}
