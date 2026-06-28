@@ -48,6 +48,8 @@ jobs:
             --verbose
             --no-progress
             --accept 200,204,206,429
+            --exclude "https://support.substack.com/.*"
+            --exclude "https://www.canva.com/.*"
             --exclude-path site/node_modules
             --exclude-path site/.next
             "**/*.md"
