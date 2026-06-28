@@ -66,6 +66,12 @@ It verifies each model returns a decodable image, that the emblem run has an
 alpha channel, and that the request shape is accepted. It spends real credits
 and is never run in CI.
 
+**Verified live (2026-06):** all six models generate; `openai/gpt-image-1`
+produces a true transparent emblem (alpha confirmed). `aspect_ratio: "2:3"` is
+honored by GPT-Image, Gemini, and Grok, but **Seedream and FLUX ignore it and
+return square images** — the editor crops these to the portrait layer box. The
+`input_references` edit path round-trips on GPT-Image.
+
 Deploy the `studio` directory as an independent Vercel project. Add the
 resulting URL to the GitHub repository variable `NEXT_PUBLIC_STUDIO_URL`; the
 publication build uses it for its Studio link.

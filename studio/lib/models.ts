@@ -57,7 +57,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     maxReferences: 14,
     transparency: false,
     costHint: "~$0.04/image",
-    note: "High-resolution with strong editing consistency.",
+    note: "High-resolution with strong editing consistency. Returns square output (cropped to the portrait layer).",
   },
   {
     id: "black-forest-labs/flux.2-pro",
@@ -68,7 +68,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     maxReferences: 8,
     transparency: false,
     costHint: "~$0.05/image",
-    note: "Fast, high-quality general generator.",
+    note: "Fast, high-quality general generator. Returns square output (cropped to the portrait layer).",
   },
   {
     id: "x-ai/grok-imagine-image-quality",
