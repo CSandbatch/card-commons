@@ -11,6 +11,9 @@ const contextSchema = z.object({
 });
 const roles = ["background", "texture", "emblem", "foreground"] as const;
 
+// Image edits can take ~35s; claim the platform's allowed ceiling.
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const auth = authorizeImageRequest(request);
   if (!auth.ok) return auth.error;

@@ -16,6 +16,9 @@ const requestSchema = z.object({
   modelId: z.string().max(120).optional(),
 });
 
+// Image generation can take ~35s; claim the platform's allowed ceiling.
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const auth = authorizeImageRequest(request);
   if (!auth.ok) return auth.error;
