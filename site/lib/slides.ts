@@ -85,7 +85,7 @@ export const slides: Slide[] = [
     body: "Start narrow enough to observe real behavior before building a universal platform.",
     type: "journeys",
     points: ["Create + publish one card", "Build + bulk-edit a stack", "Play a prompt-response game", "Fork without overwriting"],
-    note: "Built today: a working Card Studio for the first experience (private pilot)."
+    note: "Live today: a deployed Card Studio for the first experience (gated pilot)."
   },
   {
     number: 9,
@@ -127,7 +127,7 @@ export const slides: Slide[] = [
     body: "Market, pricing, and segment claims remain hypotheses until task research and repeated use support them.",
     type: "roadmap",
     points: ["Protocol prototype", "Make + publish", "Arrange + play", "Remix + pilot"],
-    note: "Step one is real: a working single-card Studio. Next is user evidence, then the rest of the loop."
+    note: "Step one is real and deployed: a live single-card Studio. Next is user evidence, then the rest of the loop."
   },
   {
     number: 14,

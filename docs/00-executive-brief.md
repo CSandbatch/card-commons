@@ -124,11 +124,12 @@ in code:
 
 - **Published:** the nine specifications, JSON Schema contracts and fixtures,
   the OpenAPI surface, the whitepaper, and this pitch site.
-- **Built and working:** a Card Studio that creates the first card kind (the
-  calling card) — constrained layer editing, local persistence, export, and
-  AI image generation **verified live across six models** through OpenRouter,
-  each generation recorded with provider and model provenance. It runs as a
-  private pilot and is not yet publicly hosted.
+- **Built, working, and deployed:** a Card Studio that creates the first card
+  kind (the calling card) — constrained layer editing, local persistence,
+  export, and AI image generation **verified live across six models** through
+  OpenRouter, each generation recorded with provider and model provenance. It is
+  deployed and running as a gated pilot (access by passcode), with production
+  verified end to end.
 - **Specified, not yet built:** stacks and collections, publishing to a URL,
   the prompt-response game, and remix.
 

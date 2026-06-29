@@ -85,6 +85,11 @@ The Studio is a deliberately narrow product slice: it creates **one**
 and exports a 1500×2100 PNG plus a portable ZIP. It is **not** the eventual
 publishing, stack, or game application.
 
+It is **deployed and live** as a gated pilot at
+<https://card-commons-studio.vercel.app> (access by pilot passcode). Production
+has been verified end to end: the access gate, a live OpenRouter generation, and
+the per-session image allowance.
+
 Every visual layer — background, texture, emblem, foreground — can be
 **uploaded** or **AI-generated**, edited, or varied. Generated and uploaded
 images enter the same reusable asset library and carry provenance.
@@ -155,7 +160,7 @@ user research, and protocol discussion.
 | Pitch-deck site | Built; deploys to GitHub Pages |
 | Card Studio (create one calling card) | Built; typecheck clean, 23/23 unit tests, CI green |
 | Image generation (OpenRouter, 6 models) | ✅ **Verified live** — all six models generate; transparent emblem and the edit path confirmed |
-| Public hosting of the Studio | **Pending** — runs locally as a private pilot; no host chosen yet |
+| Studio hosting | ✅ **Live (gated pilot)** on Vercel — [card-commons-studio.vercel.app](https://card-commons-studio.vercel.app) |
 | Rest of the MVP (stacks, publishing, games) | Specified, not yet built |
 
 The editor screenshots above use the deterministic mock harness for repeatable

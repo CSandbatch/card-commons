@@ -108,8 +108,9 @@ export default function HomePage() {
           </p>
           <p>
             And a working Card Studio: it creates the first card type today—with
-            AI image generation verified live across six models. It runs as a
-            private pilot while the rest of the loop is still being built.
+            AI image generation verified live across six models. It is deployed
+            and running now as a gated pilot, while the rest of the loop is still
+            being built.
           </p>
           <div className="proof-actions">
             <Link className="button button-dark" href="/specs">Open the specs <span>→</span></Link>
